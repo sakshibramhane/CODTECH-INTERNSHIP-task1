@@ -1,0 +1,73 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <random>
+#include <limits>
+
+// Structure to represent a data point
+struct DataPoint {
+    double x, y;
+};
+
+// K-Means Clustering
+std::vector<int> kMeansClustering(const std::vector<DataPoint>& data, int k, int maxIterations) {
+    std::vector<DataPoint> centroids(k);
+    std::vector<int> labels(data.size());
+
+    // Initialize centroids randomly
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dis(0.0, 1.0);
+    for (int i = 0; i < k; ++i) {
+        centroids[i].x = dis(gen);
+        centroids[i].y = dis(gen);
+    }
+
+    for (int iter = 0; iter < maxIterations; ++iter) {
+        // Assign each data point to the closest centroid
+        for (int i = 0; i < data.size(); ++i) {
+            double minDist = std::numeric_limits<double>::max();
+            int closestCentroid = -1;
+            for (int j = 0; j < k; ++j) {
+                double dist = std::pow(data[i].x - centroids[j].x, 2) + std::pow(data[i].y - centroids[j].y, 2);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestCentroid = j;
+                }
+            }
+            labels[i] = closestCentroid;
+        }
+
+        // Update centroids
+        std::vector<int> count(k, 0);
+        std::vector<DataPoint> newCentroids(k, {0, 0});
+        for (int i = 0; i < data.size(); ++i) {
+            newCentroids[labels[i]].x += data[i].x;
+            newCentroids[labels[i]].y += data[i].y;
+            count[labels[i]]++;
+        }
+        for (int j = 0; j < k; ++j) {
+            if (count[j] > 0) {
+                newCentroids[j].x /= count[j];
+                newCentroids[j].y /= count[j];
+            }
+        }
+        centroids = newCentroids;
+    }
+
+    return labels;
+}
+
+int main() {
+    std::vector<DataPoint> data = {{0.1, 0.2}, {0.3, 0.4}, {0.5, 0.6}, {0.7, 0.8}};
+    int k = 2;
+    int maxIterations = 100;
+
+    std::vector<int> labels = kMeansClustering(data, k, maxIterations);
+
+    for (int i = 0; i < labels.size(); ++i) {
+        std::cout << "Data point (" << data[i].x << ", " << data[i].y << ") is in cluster " << labels[i] << std::endl;
+    }
+
+    return 0;
+}
